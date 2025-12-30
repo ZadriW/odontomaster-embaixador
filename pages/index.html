@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Embaixador Master | Odonto Master</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/style.css') }}">
+</head>
+<body>
+    <!-- Background Effects -->
+    <div class="bg-effects">
+        <div class="floating-shapes">
+            <div class="shape"></div>
+            <div class="shape"></div>
+            <div class="shape"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <img src="{{ url_for('images', filename='logo-ranking.png') }}" alt="Embaixador Master - Odonto Master" class="logo">
+            <a href="{{ url_for('logout') }}" class="logout-btn" title="Sair">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+            </a>
+        </header>
+
+        <!-- Saudações -->
+        <section class="greeting">
+            <h1>Olá, <span class="user-name" id="userName">{{ user.name }}</span>!</h1>
+            <p>Acompanhe seu progresso como Embaixador Master da Odonto Master</p>
+        </section>
+
+        <!-- Cupom -->
+        <section class="coupon-section">
+            <h2>Seu Cupom de Desconto</h2>
+            <div class="coupon-code">
+                <div class="coupon-display">
+                    <span id="couponCode">{{ user.coupon }}</span>
+                </div>
+                <button class="copy-btn" onclick="copyCoupon()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Copiar Cupom
+                </button>
+            </div>
+        </section>
+
+        <!-- Cards -->
+        <div class="cards-container">
+            <div class="card">
+                <div class="card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                </div>
+                <h3>Suas Vendas</h3>
+                <div class="card-value">
+                    <span class="currency">R$</span>
+                    <span id="salesValue">{{ "{:,.2f}".format(user.total_sales).replace(",", "X").replace(".", ",").replace("X", ".") if user.total_sales else "0,00" }}</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    </svg>
+                </div>
+                <h3>Suas Listas</h3>
+                <div class="card-value">
+                    <span id="listsValue">{{ user.total_lists }}</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon gold">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                </div>
+                <h3>Meta do Prêmio</h3>
+                <div class="card-value">
+                    <span class="currency">R$</span>
+                    <span id="goalValue">{{ "{:,.2f}".format(user.goal).replace(",", "X").replace(".", ",").replace("X", ".") if user.goal else "50.000,00" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Section -->
+        <section class="progress-section">
+            <div class="progress-header">
+                <div class="progress-title">
+                    <div class="progress-title-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h2>Progresso para o Prêmio</h2>
+                        <p>Continue indicando e ganhe!</p>
+                    </div>
+                </div>
+                <div class="progress-stats">
+                    <div class="current" id="progressPercent">0%</div>
+                    <div class="total">da meta alcançada</div>
+                </div>
+            </div>
+
+            <div class="progress-wrapper">
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progressBar" style="width: 0%;">
+                        <div class="progress-bar-glow"></div>
+                    </div>
+                </div>
+                <div class="progress-labels">
+                    <span class="progress-label">R$ 0</span>
+                    <span class="progress-label end">R$ {{ "{:,.0f}".format(user.goal).replace(",", ".") }}</span>
+                </div>
+            </div>
+
+            <!-- Milestones -->
+            <div class="milestones">
+                <div class="milestone">
+                    <div class="milestone-dot">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <span class="milestone-value">R$ 10k</span>
+                </div>
+                <div class="milestone">
+                    <div class="milestone-dot">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <span class="milestone-value">R$ 20k</span>
+                </div>
+                <div class="milestone">
+                    <div class="milestone-dot">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <span class="milestone-value">R$ 30k</span>
+                </div>
+                <div class="milestone">
+                    <div class="milestone-dot">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <span class="milestone-value">R$ 40k</span>
+                </div>
+                <div class="milestone">
+                    <div class="milestone-dot">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <span class="milestone-value">R$ 50k</span>
+                </div>
+            </div>
+
+            <!-- Prize Banner -->
+            <div class="prize-banner">
+                <div class="prize-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="prize-info">
+                    <h3>🏆 Prêmio Especial!</h3>
+                    <p>Ao atingir R$ {{ "{:,.0f}".format(user.goal).replace(",", ".") }} em vendas com seu cupom, você ganhará um prêmio exclusivo!</p>
+                </div>
+                <div class="prize-remaining">
+                    <span>Faltam apenas</span>
+                    <strong id="remainingValue">R$ 0,00</strong>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>© 2025 <a href="#">Odonto Master</a>. Programa Embaixador Master.</p>
+        </footer>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">Cupom copiado com sucesso!</div>
+
+    <!-- Dados do usuário para JavaScript -->
+    <script>
+        // Dados do usuário serializados como JSON pelo Jinja2
+        const userData = {{ user.to_dict()|tojson }};
+    </script>
+    <script src="{{ url_for('static', filename='JS/script.js') }}"></script>
+</body>
+</html>
+
