@@ -1,3 +1,13 @@
+# Odonto Master - Programa Embaixador
+# Dependências para produção em VPS Windows com Waitress
+
+# Framework Flask
 Flask==3.0.0
 Flask-SQLAlchemy==3.1.1
 Werkzeug==3.0.1
+
+# Servidor WSGI para Windows (Waitress)
+waitress==2.1.2
+
+# PostgreSQL (opcional - descomente se usar banco PostgreSQL)
+# psycopg2-binary==2.9.9

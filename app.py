@@ -10,7 +10,7 @@ app = Flask(__name__,
 
 # Configurações base
 basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SECRET_KEY'] = 'odonto-master-secret-key-2025'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'odonto-master-secret-key-2025-dev-change-in-production')
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hora
 
@@ -20,17 +20,31 @@ def images(filename):
     images_dir = os.path.join(basedir, 'images')
     return send_from_directory(images_dir, filename)
 
-# Rota para favicon (evita erro 404)
+# Rota para favicon
 @app.route('/favicon.ico')
 def favicon():
-    return '', 204  # Retorna No Content para evitar erro 404
+    # Tenta servir favicon.ico da pasta images
+    favicon_path = os.path.join(basedir, 'images', 'favicon.ico')
+    if os.path.exists(favicon_path):
+        return send_from_directory(os.path.join(basedir, 'images'), 'favicon.ico')
+    # Se não existir, retorna 204 No Content para evitar erro 404
+    return '', 204
 
-# Criar pasta database se não existir
-database_dir = os.path.join(basedir, 'database')
-if not os.path.exists(database_dir):
-    os.makedirs(database_dir)
+# Configuração do banco de dados
+# Em produção, usar variável de ambiente DATABASE_URL (ex: PostgreSQL)
+database_url = os.environ.get('DATABASE_URL')
+if database_url:
+    # Para PostgreSQL do Heroku/Render (formato: postgresql://user:pass@host/db)
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+else:
+    # SQLite para desenvolvimento local
+    database_dir = os.path.join(basedir, 'database')
+    if not os.path.exists(database_dir):
+        os.makedirs(database_dir)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(database_dir, 'users.db')
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(database_dir, 'users.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Inicialização
@@ -86,21 +100,45 @@ def get_current_admin():
     return None
 
 def login_user_session(user):
-    """Faz login do usuário na sessão"""
-    session.clear()  # Limpa qualquer sessão anterior
+    """Faz login do usuário na sessão (sem afetar sessão do admin)"""
+    # Define chaves do usuário sem remover chaves do admin
+    # Permite que ambos (user e admin) estejam logados simultaneamente
     session['user_id'] = user.id
-    session['user_type'] = 'user'
+    # user_type não é necessário para verificação, mas pode ser usado para informação
+    # Como podemos ter ambos logados, não sobrescrevemos user_type
+    if 'user_type' not in session:
+        session['user_type'] = 'user'
     session.permanent = True
 
 def login_admin_session(admin):
-    """Faz login do admin na sessão"""
-    session.clear()  # Limpa qualquer sessão anterior
+    """Faz login do admin na sessão (sem afetar sessão do user)"""
+    # Define chaves do admin sem remover chaves do user
+    # Permite que ambos (user e admin) estejam logados simultaneamente
     session['admin_id'] = admin.id
-    session['user_type'] = 'admin'
+    # user_type não é necessário para verificação, mas pode ser usado para informação
+    # Como podemos ter ambos logados, não sobrescrevemos user_type
+    if 'user_type' not in session:
+        session['user_type'] = 'admin'
     session.permanent = True
 
+def logout_user_session():
+    """Faz logout do usuário (remove apenas chaves do user)"""
+    session.pop('user_id', None)
+    # Remove user_type apenas se for 'user' (não afeta se for 'admin')
+    if session.get('user_type') == 'user':
+        session.pop('user_type', None)
+    # Se ainda há admin_id na sessão, admin continua logado
+
+def logout_admin_session():
+    """Faz logout do admin (remove apenas chaves do admin)"""
+    session.pop('admin_id', None)
+    # Remove user_type apenas se for 'admin' (não afeta se for 'user')
+    if session.get('user_type') == 'admin':
+        session.pop('user_type', None)
+    # Se ainda há user_id na sessão, user continua logado
+
 def logout_session():
-    """Faz logout limpando a sessão"""
+    """Faz logout completo (limpa toda a sessão) - usar apenas quando necessário"""
     session.clear()
 
 # ==================== DECORATORS ====================
@@ -200,12 +238,12 @@ def create_default_admin():
             admin = Admin(
                 username='admin',
                 email='admin@odontomaster.com',
-                password=generate_password_hash('admin123'),
+                password=generate_password_hash('adminmaster123'),
                 name='Administrador'
             )
             db.session.add(admin)
             db.session.commit()
-            print('Admin padrão criado: admin / admin123')
+            print('Admin padrão criado: admin / adminmaster123')
 
 # ==================== ROTAS DO USUÁRIO ====================
 
@@ -274,9 +312,31 @@ def get_user():
     user = get_current_user()
     return jsonify(user.to_dict())
 
+@app.route('/api/ranking/top3')
+@user_required
+def api_ranking_top3():
+    """Retorna os 3 usuários com maior total_sales (apenas nome e posição)"""
+    try:
+        # Buscar os 3 usuários com maior total_sales, ordenados por total_sales descendente
+        top_users = User.query.order_by(User.total_sales.desc()).limit(3).all()
+        
+        # Preparar dados para retorno (apenas nome e posição)
+        ranking = []
+        positions = ['1º', '2º', '3º']
+        
+        for index, user in enumerate(top_users):
+            ranking.append({
+                'position': positions[index],
+                'name': user.name
+            })
+        
+        return jsonify(ranking)
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Erro ao buscar ranking: {str(e)}'}), 500
+
 @app.route('/logout')
 def logout():
-    logout_session()
+    logout_user_session()  # Remove apenas sessão do user
     return redirect(url_for('login'))
 
 # ==================== ROTAS DO ADMINISTRADOR ====================
@@ -468,7 +528,7 @@ def admin_delete_user(user_id):
 
 @app.route('/admin/logout')
 def admin_logout():
-    logout_session()
+    logout_admin_session()  # Remove apenas sessão do admin
     return redirect(url_for('admin_login'))
 
 # ==================== INICIALIZAÇÃO ====================
@@ -562,4 +622,7 @@ def create_tables():
 
 if __name__ == '__main__':
     create_tables()
-    app.run(debug=True, port=5000)
+    # Em produção, usar variável de ambiente PORT
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_ENV') == 'development'
+    app.run(debug=debug, host='0.0.0.0', port=port)

@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+env/
+.venv/
+
+# Flask
+instance/
+.webassets-cache
+
+# Banco de dados SQLite
+database/
+*.db
+*.sqlite
+*.sqlite3
+
+# Backups locais
+backups/
+
+# Variaveis de ambiente e chaves secretas
+.env
+.env.local
+.env.*.local
+.secret_key
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Arquivos temporarios
+*.tmp
+*.temp
+
+# Distribuicao
+dist/
+build/
+*.egg-info/
+
+# Arquivos de sessao Flask
+flask_session/
