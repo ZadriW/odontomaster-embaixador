@@ -5,9 +5,9 @@ __pycache__/
 *.so
 .Python
 venv/
-ENV/
 env/
-.venv/
+ENV/
+virtualenv/
 
 # Flask
 instance/
@@ -19,14 +19,17 @@ database/
 *.sqlite
 *.sqlite3
 
-# Backups locais
+# Logs
+logs/
+*.log
+
+# Backups
 backups/
 
-# Variaveis de ambiente e chaves secretas
+# Arquivos de ambiente e segurança
 .env
-.env.local
-.env.*.local
 .secret_key
+*.key
 
 # IDE
 .vscode/
@@ -35,23 +38,12 @@ backups/
 *.swo
 *~
 
-# OS
+# Sistema Operacional
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# Logs
-*.log
-logs/
-
-# Arquivos temporarios
+# Arquivos temporários
 *.tmp
-*.temp
-
-# Distribuicao
-dist/
-build/
-*.egg-info/
-
-# Arquivos de sessao Flask
-flask_session/
+*.bak
+*.cache

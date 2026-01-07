@@ -10,7 +10,40 @@ app = Flask(__name__,
 
 # Configurações base
 basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'odonto-master-secret-key-2025-dev-change-in-production')
+
+# SECRET_KEY: Em produção, gera automaticamente e salva em arquivo
+def get_secret_key():
+    """Obtém ou gera a SECRET_KEY para a aplicação"""
+    secret_key_file = os.path.join(basedir, '.secret_key')
+    
+    # Primeiro, verifica variável de ambiente
+    if os.environ.get('SECRET_KEY'):
+        return os.environ.get('SECRET_KEY')
+    
+    # Tenta ler do arquivo
+    if os.path.exists(secret_key_file):
+        try:
+            with open(secret_key_file, 'r') as f:
+                key = f.read().strip()
+                if key:
+                    return key
+        except:
+            pass
+    
+    # Gera nova chave e salva
+    import secrets
+    new_key = secrets.token_hex(32)
+    try:
+        with open(secret_key_file, 'w') as f:
+            f.write(new_key)
+        # Define permissões restritas (apenas leitura para owner)
+        os.chmod(secret_key_file, 0o600)
+    except:
+        pass  # Se não conseguir salvar, usa a chave gerada apenas em memória
+    
+    return new_key
+
+app.config['SECRET_KEY'] = get_secret_key()
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hora
 
@@ -23,10 +56,10 @@ def images(filename):
 # Rota para favicon
 @app.route('/favicon.ico')
 def favicon():
-    # Tenta servir favicon.ico da pasta images
-    favicon_path = os.path.join(basedir, 'images', 'favicon.ico')
-    if os.path.exists(favicon_path):
-        return send_from_directory(os.path.join(basedir, 'images'), 'favicon.ico')
+    # Serve logo-ranking.png como favicon
+    logo_path = os.path.join(basedir, 'images', 'logo-ranking.png')
+    if os.path.exists(logo_path):
+        return send_from_directory(os.path.join(basedir, 'images'), 'logo-ranking.png', mimetype='image/png')
     # Se não existir, retorna 204 No Content para evitar erro 404
     return '', 204
 
@@ -540,6 +573,8 @@ def migrate_email_to_cpf():
     import sqlite3
     from sqlalchemy import inspect
     
+    # Define o caminho do banco de dados
+    database_dir = os.path.join(basedir, 'database')
     db_path = os.path.join(database_dir, 'users.db')
     if not os.path.exists(db_path):
         return  # Banco não existe ainda, será criado com a estrutura correta
